@@ -1,0 +1,49 @@
+resource "aws_elasticsearch_domain" "es" {
+  domain_name           = "tf-test"
+  elasticsearch_version = "1.5"
+
+  cluster_config {
+    instance_type  = "t2.small.elasticsearch"
+    instance_count = "6"
+  }
+
+  ebs_options {
+    ebs_enabled = "true"
+    volume_size = "10"
+    volume_type = "gp2"
+  }
+
+  advanced_options {
+    "rest.action.multi.allow_explicit_index" = "true"
+  }
+
+  access_policies = <<CONFIG
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "es:*",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Condition": {
+                "IpAddress": {"aws:SourceIp": ["52.221.210.81/32"]}        #########IP adress of machine from which you wanna access domain
+            }
+        }
+    ]
+}
+CONFIG
+
+  snapshot_options {
+    automated_snapshot_start_hour = 23
+  }
+
+  tags {
+    Domain = "TestDomain"
+  }
+}
+
+
+output "Endpointss" {
+  value = "${aws_elasticsearch_domain.es.endpoint}"
+}
+
